@@ -1,0 +1,39 @@
+name: 新增平台支持
+description: 希望看板支持另一个 AI 平台
+labels: [enhancement, provider]
+body:
+  - type: input
+    id: platform
+    attributes:
+      label: 平台名称
+      placeholder: 例如 阿里云百炼 / 腾讯云 TokenHub
+    validations:
+      required: true
+  - type: input
+    id: docs
+    attributes:
+      label: 余额或用量接口文档
+      description: 贴官方文档链接即可，有 curl 示例最好
+      placeholder: https://...
+    validations:
+      required: true
+  - type: textarea
+    id: auth
+    attributes:
+      label: 鉴权方式
+      description: API Key / AK-SK 签名 / OAuth 登录，哪种？
+      placeholder: |
+        - 方式：Bearer API Key
+        - 是否需要额外签名：否
+  - type: textarea
+    id: response
+    attributes:
+      label: 响应示例（可选）
+      description: 请把真实余额和账号信息打码后再贴
+      render: json
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: 愿意提 PR 吗
+      options:
+        - label: 我可以按 CONTRIBUTING.md 写一个适配器

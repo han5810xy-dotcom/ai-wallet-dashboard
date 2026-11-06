@@ -8,24 +8,74 @@
   </head>
   <body>
     <header class="top">
-      <div class="title">
-        <h1>AI 钱包看板</h1>
-        <p class="sub" id="sub">正在读取各平台余额…</p>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">◈</div>
+        <div>
+          <h1>AI 钱包看板</h1>
+          <p class="sub" id="sub">正在读取各平台余额…</p>
+        </div>
       </div>
       <div class="tools">
-        <span id="countdown" class="countdown"></span>
-        <button id="refresh" class="btn" type="button">立即刷新</button>
+        <button id="theme" class="icon-btn" type="button" title="切换主题" aria-label="切换主题">◐</button>
+        <button id="settings" class="icon-btn" type="button" title="设置" aria-label="设置">⚙</button>
+        <button id="refresh" class="btn primary" type="button">刷新</button>
       </div>
     </header>
 
-    <main id="cards" class="cards" aria-live="polite">
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-    </main>
+    <section id="totals" class="totals" aria-live="polite"></section>
+    <main id="cards" class="cards"></main>
 
     <footer class="foot">
-      余额取自各平台官方接口，快照存在本地 <code>data/</code>；消耗按余额净变化估算，检测到充值会单独标注。
+      余额取自各平台官方接口，快照存在本地 <code>data/</code>；消耗按余额净变化推算，充值单独标注。
     </footer>
+
+    <div id="scrim" class="scrim" hidden></div>
+    <aside id="drawer" class="drawer" aria-hidden="true" aria-label="设置">
+      <div class="drawer-head">
+        <h2>设置</h2>
+        <button id="close-drawer" class="icon-btn" type="button" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="set-interval">刷新间隔</label>
+        <select id="set-interval">
+          <option value="30">30 秒</option>
+          <option value="60">1 分钟</option>
+          <option value="120">2 分钟</option>
+          <option value="300">5 分钟</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="set-theme">外观</label>
+        <select id="set-theme">
+          <option value="auto">跟随系统</option>
+          <option value="dark">深色</option>
+          <option value="light">浅色</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>余额告警线</label>
+        <div id="thresholds" class="thresholds"></div>
+        <p class="hint">低于该值时卡片变黄；开启通知后浏览器会弹提醒。</p>
+      </div>
+
+      <div class="field">
+        <label>低余额通知</label>
+        <button id="notify" class="btn" type="button">开启浏览器通知</button>
+      </div>
+
+      <div class="field">
+        <label>导出数据</label>
+        <div id="exports" class="exports"></div>
+      </div>
+
+      <div class="drawer-foot">
+        <span>ai-wallet-dashboard v0.2.0</span>
+        <a href="https://github.com/han5810xy-dotcom/ai-wallet-dashboard" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </div>
+    </aside>
 
     <script type="module" src="/app.js"></script>
   </body>

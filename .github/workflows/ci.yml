@@ -17,7 +17,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - name: 单元测试
+      - name: 单元 + 集成测试
         run: npm test
+      - name: 覆盖率
+        run: npm run coverage
       - name: CLI 冒烟（演示数据）
         run: node src/cli.mjs snapshot --mock

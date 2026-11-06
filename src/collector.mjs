@@ -1,5 +1,6 @@
 import { getProviders } from './providers/index.mjs'
 import { spendStats, downsample } from './stats.mjs'
+import { dailySeries, forecast } from './daily.mjs'
 import { round } from './util.mjs'
 
 const HOUR = 60 * 60 * 1000
@@ -32,6 +33,18 @@ export class Collector {
     }
   }
 
+  /** 统一补齐「按天聚合 + 预测」，让各分支返回结构一致 */
+  withDerived(base, history, now) {
+    const daily = dailySeries(history, { days: 14, now })
+    return {
+      ...base,
+      history: downsample(history),
+      daily,
+      spend: spendStats(history, now),
+      forecast: forecast(base.total, daily),
+    }
+  }
+
   async collectOne(provider) {
     const cfg = this.providerConfig(provider.id)
     const base = {
@@ -60,7 +73,7 @@ export class Collector {
     if (!envKey) {
       base.error = `未配置 ${provider.envKeys.join(' / ')}`
       const history = await this.store.read(provider.id, this.now())
-      return { ...base, history: downsample(history), spend: spendStats(history, this.now()) }
+      return this.withDerived(base, history, this.now())
     }
 
     base.configured = true
@@ -69,23 +82,14 @@ export class Collector {
       const ts = this.now()
       await this.store.append(provider.id, snap, ts)
       const history = await this.store.read(provider.id, ts)
-      return {
-        ...base,
-        ...snap,
-        ok: true,
-        updatedAt: ts,
-        history: downsample(history),
-        spend: spendStats(history, ts),
-      }
+      return this.withDerived({ ...base, ...snap, ok: true, updatedAt: ts }, history, ts)
     } catch (err) {
       const history = await this.store.read(provider.id, this.now())
-      return {
-        ...base,
-        error: err?.message || String(err),
-        status: err?.status ?? null,
-        history: downsample(history),
-        spend: spendStats(history, this.now()),
-      }
+      return this.withDerived(
+        { ...base, error: err?.message || String(err), status: err?.status ?? null },
+        history,
+        this.now(),
+      )
     }
   }
 
@@ -104,16 +108,18 @@ export class Collector {
       points.push({ t, total: round(Math.max(value, 0.01)), balance: round(Math.max(value, 0.01)) })
     }
     const last = points[points.length - 1]
-    return {
-      ...base,
-      configured: true,
-      ok: true,
-      currency: isCny ? 'CNY' : 'USD',
-      balance: last.total,
-      total: last.total,
-      updatedAt: end,
-      history: downsample(points),
-      spend: spendStats(points, end),
-    }
+    return this.withDerived(
+      {
+        ...base,
+        configured: true,
+        ok: true,
+        currency: isCny ? 'CNY' : 'USD',
+        balance: last.total,
+        total: last.total,
+        updatedAt: end,
+      },
+      points,
+      end,
+    )
   }
 }

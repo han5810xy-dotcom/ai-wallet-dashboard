@@ -1,0 +1,42 @@
+name: Bug 报告
+description: 某个平台余额不对、页面报错、启动失败
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提 issue 前先跑一遍 `npm run demo`，确认是程序问题还是配置问题。
+        **不要贴 API Key / 余额截图里的账号信息。**
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: package.json 里的 version，或 commit sha
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 相关平台
+      multiple: true
+      options: [DeepSeek, Router One, 千问AI平台, 全部, 与平台无关]
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      description: 期望什么、实际什么；有报错就贴完整信息（Key 请打码）
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. npm start
+        2. 打开 http://127.0.0.1:8787
+        3. ...
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      placeholder: Windows 11 / Node 22.11 / Edge 138

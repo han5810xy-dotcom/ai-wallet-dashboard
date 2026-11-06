@@ -2,6 +2,7 @@ import http from 'node:http'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { toCsv } from './export.mjs'
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
@@ -48,6 +49,9 @@ export function createApp({ collector, refreshSeconds = 60 }) {
         const data = await summary(url.searchParams.get('force') === '1')
         return sendJson(res, 200, data)
       }
+      if (url.pathname === '/api/export.csv') {
+        return await exportCsv(url, res, collector)
+      }
       if (url.pathname === '/healthz') {
         return sendJson(res, 200, { ok: true })
       }
@@ -56,6 +60,21 @@ export function createApp({ collector, refreshSeconds = 60 }) {
       return sendJson(res, 500, { error: err?.message || String(err) })
     }
   }
+}
+
+async function exportCsv(url, res, collector) {
+  const providerId = url.searchParams.get('provider')
+  if (!providerId || !/^[a-z0-9-]+$/.test(providerId)) {
+    return sendJson(res, 400, { error: '缺少或非法的 provider 参数' })
+  }
+  const rows = await collector.store.read(providerId, Date.now())
+  const csv = toCsv(rows)
+  res.writeHead(200, {
+    'content-type': 'text/csv; charset=utf-8',
+    'content-disposition': `attachment; filename="${providerId}-snapshots.csv"`,
+    'cache-control': 'no-store',
+  })
+  res.end(csv)
 }
 
 async function serveStatic(pathname, res) {

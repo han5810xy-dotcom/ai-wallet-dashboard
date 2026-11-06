@@ -18,12 +18,15 @@
 
 ## 特性
 
-- **一个页面看全部**：多平台卡片并排，按币种自动合计
-- **消耗趋势**：近 24h / 7d / 30d 净消耗 + 余额曲线（充值会单独标出）
-- **低余额告警**：每个平台可配置告警线，低于阈值卡片变黄
-- **零依赖**：只用 Node 内置模块，`git clone` 即可运行
+- **一个页面看全部**：多平台卡片并排，顶部按币种合计余额、日均消耗与最短可用天数
+- **每日消耗柱状图**：按天聚合消耗与充值，可切换成余额曲线（充值点单独标出）
+- **余额预测**：按近 7 日均耗估算「约还剩 N 天」，低于 7 天徽标变黄
+- **低余额告警**：告警线可逐平台调整，配浏览器通知
+- **数据可带走**：一键导出 CSV（时间、余额、冻结、赠送），丢进 Excel / pandas
+- **双主题**：跟随系统 / 深色 / 浅色，设置存本地
+- **零依赖**：只用 Node 内置模块，`git clone` 即可运行；27 个测试覆盖到 HTTP 路由
 - **本地优先**：快照存 `data/*.jsonl`，不上传任何数据，不做遥测
-- **易扩展**：新增平台 = 写一个 20 行的适配器文件
+- **易扩展**：新增平台 = 写一个二十来行的适配器文件
 
 ## 快速开始
 
@@ -56,14 +59,15 @@ npm run snapshot -- --json # 机器可读
 
 ### 桌面化（Windows）
 
-浏览器打开后，用 Edge/Chrome 的「安装此站点为应用」或直接建快捷方式：
-
 ```powershell
-# 无地址栏的独立窗口
-msedge --app=http://127.0.0.1:8787
+# 生成桌面快捷方式（Edge/Chrome 独立窗口，无地址栏）
+pwsh -File scripts/install-shortcut.ps1
+
+# 顺便加入开机启动
+pwsh -File scripts/install-shortcut.ps1 -Startup
 ```
 
-配合「启动」文件夹或计划任务，开机即常驻。macOS 可用 `open -a "Google Chrome" --args --app=http://127.0.0.1:8787`。
+脚本会自动找 Edge / Chrome，用 `--app=http://127.0.0.1:8787` 创建快捷方式。macOS 可用 `open -a "Google Chrome" --args --app=http://127.0.0.1:8787`。
 
 ## 支持的平台
 
@@ -118,6 +122,30 @@ qianwen billing balance summary --format json        # 看板就是调这条
 环境变量优先于配置文件：`DEEPSEEK_API_KEY`、`ROUTER_ONE_API_KEY`、`AI_WALLET_DATA_DIR`、`AI_WALLET_CONFIG`。
 
 平台级可选字段：`name`（显示名）、`lowBalance`（告警线）、`command` / `args` / `timeoutMs`（仅 `qianwen` 这类壳调用型平台）。
+
+## 数据与操作
+
+- 页面每 `refreshSeconds` 秒拉一次 `/api/summary`，同时把一条快照写进 `data/<平台>.jsonl`（保留 90 天）
+- 卡片右上「导出 CSV」→ `GET /api/export.csv?provider=<id>`，字段：时间、毫秒时间戳、币种、可用余额、总余额、冻结、赠送
+- 快捷键：`R` 刷新、`S` 打开设置、`Esc` 关闭
+- 设置（主题 / 刷新间隔 / 告警线 / 通知）存在浏览器 localStorage，不写服务端
+
+## 项目结构
+
+```
+src/
+  cli.mjs        serve / snapshot / providers 三个子命令
+  server.mjs     HTTP 服务、静态资源、/api/summary、/api/export.csv
+  collector.mjs  并发采集 → 写快照 → 汇总派生字段
+  store.mjs      JSONL 快照读写、90 天修剪
+  stats.mjs      24h/7d/30d 净消耗
+  daily.mjs      按天聚合与余额预测
+  export.mjs     CSV 生成
+  providers/     平台适配器（deepseek、routerone、qianwen）
+public/          无构建步骤的单页前端
+scripts/         Windows 快捷方式安装脚本
+test/            node:test 用例（27 个）
+```
 
 ## 工作原理
 
