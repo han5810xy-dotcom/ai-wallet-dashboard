@@ -96,7 +96,19 @@ async function main() {
   }
 
   const port = args.port || config.port || 8787
-  const { url } = await startServer({ collector, refreshSeconds: config.refreshSeconds ?? 60, port, host: '127.0.0.1' })
+  const attribution = {
+    enabled: config.attribution?.enabled !== false,
+    dshDir: process.env.AI_WALLET_DSH_DIR || config.attribution?.dshDir || path.join(os.homedir(), '.dsh'),
+    days: config.attribution?.days || 30,
+    pricing: config.attribution?.pricing,
+  }
+  const { url } = await startServer({
+    collector,
+    refreshSeconds: config.refreshSeconds ?? 60,
+    port,
+    host: '127.0.0.1',
+    attribution,
+  })
   console.log(`ai-wallet 已启动：${url}${args.mock ? '（演示数据）' : ''}`)
   console.log('Ctrl+C 退出')
   if (args.open !== false) openBrowser(url)

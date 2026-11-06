@@ -1,6 +1,7 @@
 import deepseek from './deepseek.mjs'
 import routerone from './routerone.mjs'
 import qianwen from './qianwen.mjs'
+import kimi from './kimi.mjs'
 import openai from './openai.mjs'
 import anthropic from './anthropic.mjs'
 import gemini from './gemini.mjs'
@@ -14,7 +15,7 @@ import gemini from './gemini.mjs'
  *
  * 新增平台：写一个同结构模块，加进数组即可（见 CONTRIBUTING.md）。
  */
-export const PROVIDERS = [deepseek, routerone, qianwen, openai, anthropic, gemini]
+export const PROVIDERS = [deepseek, routerone, qianwen, kimi, openai, anthropic, gemini]
 
 export function getProviders(ids) {
   if (!ids || ids.length === 0) return PROVIDERS

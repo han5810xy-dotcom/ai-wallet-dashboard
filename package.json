@@ -1,7 +1,7 @@
 {
   "name": "ai-wallet-dashboard",
-  "version": "0.3.0",
-  "description": "本地运行的 AI 花费看板：预付余额（DeepSeek / 千问 / Router One）与按量账单（OpenAI / Anthropic）一处查看，带余额预测与低余额告警。零依赖。",
+  "version": "0.4.0",
+  "description": "本地运行的 AI 花费看板：7 家平台的余额与按量账单，外加 DSH 会话级花费归因。零依赖。",
   "type": "module",
   "bin": {
     "ai-wallet": "src/cli.mjs"

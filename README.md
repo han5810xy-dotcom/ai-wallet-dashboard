@@ -26,7 +26,8 @@
 - **低余额告警**：告警线可逐平台调整，配浏览器通知
 - **数据可带走**：一键导出 CSV（时间、余额、冻结、赠送），丢进 Excel / pandas
 - **双主题**：跟随系统 / 深色 / 浅色，设置存本地
-- **零依赖**：只用 Node 内置模块，`git clone` 即可运行；27 个测试覆盖到 HTTP 路由
+- **花费归因**：读 DSH 本地会话缓存，算出「哪个会话花了多少 token、值多少钱」，这是云端控制台看不到的
+- **零依赖**：只用 Node 内置模块，`git clone` 即可运行；38 个测试覆盖到 HTTP 路由与归因解析
 - **本地优先**：快照存 `data/*.jsonl`，不上传任何数据，不做遥测
 - **易扩展**：新增平台 = 写一个二十来行的适配器文件
 
@@ -78,6 +79,7 @@ pwsh -File scripts/install-shortcut.ps1 -Startup
 | `deepseek` | DeepSeek 开放平台 | 余额 | `GET https://api.deepseek.com/user/balance` | CNY |
 | `routerone` | Router One | 余额 | `GET https://api.router.one/v1/balance` | USD |
 | `qianwen` | 千问AI平台 | 余额 | 官方 CLI `qianwen billing balance summary --format json` | CNY |
+| `kimi` | Kimi（Moonshot） | 余额 | `GET https://api.moonshot.cn/v1/users/me/balance` | CNY |
 | `openai` | OpenAI | 账单 | `GET /v1/organization/costs`（**Admin Key**） | USD |
 | `anthropic` | Anthropic Claude | 账单 | `GET /v1/organizations/cost_report`（**Admin Key**） | USD |
 | `gemini` | Google Gemini | 余额（手填） | 无公开接口 | USD |
@@ -140,6 +142,31 @@ qianwen billing balance summary --format json        # 看板就是调这条
 环境变量优先于配置文件：`DEEPSEEK_API_KEY`、`ROUTER_ONE_API_KEY`、`OPENAI_ADMIN_KEY`、`ANTHROPIC_ADMIN_KEY`、`AI_WALLET_DATA_DIR`、`AI_WALLET_CONFIG`。
 
 平台级可选字段：`name`（显示名）、`lowBalance`（告警线）、`command` / `args` / `timeoutMs`（仅 `qianwen` 这类壳调用型平台）。
+
+## 花费归因（DeepSeek Harness 用户）
+
+看板底部会读 `~/.dsh/storages/session_projcache/sessions/*.json`，把每个 DSH 会话的 token 用量按会话汇总，估算花掉多少钱：
+
+```
+合计 190.8M tokens · 估算 ¥18.97
+联网搜索美化生涯报告   deepseek-v4-pro   5.9M tokens   ≈ ¥5.46
+有毒物质冲击活性污泥…  deepseek-v4-pro   7.3M tokens   ≈ ¥4.73
+```
+
+- 单价按官方公开价（`deepseek-flash` 2/0.04/8 元每百万，`deepseek-v4-pro` 9/0.3/27），可在配置里覆盖
+- **没登记单价的模型只报 token、不报金额**，避免用别人的价格算出一个错误数字
+- 投影缓存只有累计值，所以是按会话归因，不是按天；按天需要解压 `session.v4.jsonl.zstd`，在路线图里
+- 不想看这块就关掉：`"attribution": { "enabled": false }`
+
+```json
+{
+  "attribution": {
+    "days": 30,
+    "dshDir": "C:/Users/you/.dsh",
+    "pricing": { "deepseek-flash": { "input": 2, "cacheRead": 0.04, "output": 8 } }
+  }
+}
+```
 
 ## 数据与操作
 

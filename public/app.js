@@ -59,6 +59,7 @@ async function load(force = false) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     state.data = await res.json()
     render(state.data)
+    loadAttribution()
     state.nextAt = Date.now() + (state.data.refreshSeconds || settings.interval) * 1000
   } catch (err) {
     toast(`读取失败：${err.message}`)
@@ -454,6 +455,56 @@ function tick() {
   if (left > 0 && left < interval) document.title = `(${left}s) AI 钱包看板`
   else document.title = 'AI 钱包看板'
   if (left === 0 && state.nextAt) load(false)
+}
+
+/* ---------------- attribution ---------------- */
+
+const fmtTokens = (n) => {
+  if (!Number.isFinite(n) || n <= 0) return '0'
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
+  return String(Math.round(n))
+}
+
+async function loadAttribution() {
+  const section = $('#attr')
+  try {
+    const res = await fetch('/api/attribution', { cache: 'no-store' })
+    const data = await res.json()
+    if (!data.available) {
+      section.hidden = true
+      return
+    }
+    section.hidden = false
+    $('#attr-sub').textContent = `近 ${data.days} 天 · ${data.sessions} 个会话 · 取自 DSH 本地日志`
+
+    if (!data.top?.length) {
+      $('#attr-body').innerHTML = `<div class="attr-empty">这段时间没有可归因的会话（需要 DSH 写过会话缓存）</div>`
+      return
+    }
+
+    const max = Math.max(...data.top.map((s) => s.cost || 0), 0.0001)
+    const rows = data.top
+      .map((s) => {
+        const width = Math.max(4, Math.round(((s.cost || 0) / max) * 100))
+        const money = s.cost == null ? '' : `≈ ¥${s.cost.toFixed(2)}`
+        return `<li class="attr-item">
+          <span class="fill" style="--w:${width}%"></span>
+          <span class="name">${escapeHtml(s.title)}<small>${escapeHtml(s.model)} · ${escapeHtml(s.project)}</small></span>
+          <span class="num">${money ? `<b>${money}</b> · ` : ''}${fmtTokens(s.tokens)} tokens</span>
+        </li>`
+      })
+      .join('')
+
+    $('#attr-body').innerHTML = `
+      <div class="attr-summary">合计 <b>${fmtTokens(data.tokens)}</b> tokens · 估算 <b>¥${data.cost.toFixed(2)}</b>（按官方高峰价，含缓存折扣）${
+        data.unknownCostSessions ? ` · 另有 ${data.unknownCostSessions} 个会话的模型单价未登记，只计 token` : ''
+      }</div>
+      <ul class="attr-list">${rows}</ul>`
+  } catch {
+    section.hidden = true
+  }
 }
 
 /* ---------------- wiring ---------------- */

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { toCsv } from './export.mjs'
+import { collectAttribution } from './attribution.mjs'
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
@@ -22,9 +23,10 @@ const MIME = {
  * - GET /            → 单页看板
  * 只监听 127.0.0.1：余额属于敏感信息，不对外网暴露。
  */
-export function createApp({ collector, refreshSeconds = 60 }) {
+export function createApp({ collector, refreshSeconds = 60, attribution = { enabled: false } }) {
   let cache = null
   let inflight = null
+  let attrCache = null
 
   async function summary(force = false) {
     const fresh = cache && Date.now() - cache.at < refreshSeconds * 1000
@@ -47,6 +49,17 @@ export function createApp({ collector, refreshSeconds = 60 }) {
     try {
       if (url.pathname === '/api/summary') {
         const data = await summary(url.searchParams.get('force') === '1')
+        return sendJson(res, 200, data)
+      }
+      if (url.pathname === '/api/attribution') {
+        if (!attribution.enabled) return sendJson(res, 200, { available: false, reason: '归因已在配置中关闭' })
+        if (attrCache && Date.now() - attrCache.at < 60_000) return sendJson(res, 200, attrCache.data)
+        const data = await collectAttribution({
+          dshDir: attribution.dshDir,
+          days: attribution.days || 30,
+          pricing: attribution.pricing,
+        })
+        attrCache = { at: Date.now(), data }
         return sendJson(res, 200, data)
       }
       if (url.pathname === '/api/export.csv') {

@@ -266,3 +266,76 @@ h1 { font-size: 19px; letter-spacing: 0.2px; }
   .balance .num { font-size: 27px; }
   .foot { padding: 0 16px 24px; }
 }
+
+/* ---------- attribution ---------- */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: 1240px;
+  margin: 8px auto 10px;
+  padding: 0 28px;
+}
+.section-head h2 { font-size: 15px; letter-spacing: 0.2px; }
+.section-sub { color: var(--faint); font-size: 12px; }
+
+.attr { max-width: 1240px; margin: 0 auto; padding: 0 28px 36px; }
+.attr-body { display: grid; gap: 10px; }
+
+.attr-summary {
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 2px 2px 4px;
+}
+.attr-summary b { color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.attr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.attr-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.attr-item .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w, 0%);
+  background: linear-gradient(90deg, var(--accent-soft), transparent 92%);
+  pointer-events: none;
+}
+.attr-item .name {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.attr-item .name small { color: var(--faint); font-size: 11px; margin-left: 6px; }
+.attr-item .num {
+  position: relative;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.attr-item .num b { color: var(--text); font-weight: 600; }
+.attr-empty { color: var(--faint); font-size: 12.5px; padding: 6px 2px; }
+
+/* ---------- polish ---------- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.total { transition: border-color 0.18s ease; }
+.total:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #26313f; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+[data-theme='light'] ::-webkit-scrollbar-thumb { background: #cbd5e1; background-clip: content-box; }
+
+@media (max-width: 680px) {
+  .section-head, .attr { padding-left: 16px; padding-right: 16px; }
+}

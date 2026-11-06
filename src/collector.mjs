@@ -135,7 +135,7 @@ export class Collector {
 
     const points = []
     const seed = provider.id.length * 7919
-    const isCny = provider.id === 'deepseek' || provider.id === 'qianwen'
+    const isCny = provider.id === 'deepseek' || provider.id === 'qianwen' || provider.id === 'kimi'
     const hash = [...provider.id].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
     let value = isCny ? 60 + (hash % 90) : 4 + (hash % 18)
     for (let i = 168; i >= 0; i -= 1) {
