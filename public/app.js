@@ -77,6 +77,7 @@ function render(data) {
   $('#sub').textContent = `${online}/${items.length} 个平台在线 · 更新于 ${when}${data.mock ? ' · 演示数据' : ''}`
 
   renderTotals(items)
+  renderInsight(items)
   $('#cards').replaceChildren(...(items.length ? items.map(card) : [emptyState()]))
 
   if (state.chartMode === 'spend') {
@@ -90,8 +91,14 @@ function render(data) {
 
 function renderTotals(items) {
   const groups = new Map()
+  const bills = new Map()
   for (const p of items) {
-    if (!p.ok || p.total === null || p.total === undefined) continue
+    if (!p.ok) continue
+    if (p.kind === 'usage') {
+      bills.set(p.currency, (bills.get(p.currency) || 0) + (p.periodSpend || 0))
+      continue
+    }
+    if (p.total === null || p.total === undefined) continue
     const g = groups.get(p.currency) || { total: 0, avg: 0, days: null, count: 0 }
     g.total += p.total
     g.count += 1
@@ -106,13 +113,57 @@ function renderTotals(items) {
 
   const cells = [...groups.entries()].map(([currency, g]) => `
     <div class="total">
-      <div class="k">${escapeHtml(currency)} 合计 · ${g.count} 个平台</div>
+      <div class="k">${escapeHtml(currency)} 预付余额 · ${g.count} 个平台</div>
       <div class="v">${money(g.total, currency)}</div>
       <div class="s">${g.avg ? `日均 ${money(g.avg, currency)} · 约 ${g.days ?? '—'} 天` : '暂无消耗样本'}</div>
     </div>`)
 
+  for (const [currency, sum] of bills) {
+    cells.push(`
+      <div class="total">
+        <div class="k">${escapeHtml(currency)} 近 30 天账单</div>
+        <div class="v">${money(sum, currency)}</div>
+        <div class="s">按量计费平台，与预付余额分开记账</div>
+      </div>`)
+  }
+
   if (!cells.length) cells.push(`<div class="total"><div class="k">合计</div><div class="v">—</div><div class="s">还没有可用的平台</div></div>`)
   $('#totals').innerHTML = cells.join('')
+}
+
+function renderInsight(items) {
+  const balances = items.filter((p) => p.ok && p.kind !== 'usage' && p.forecast)
+  const bills = items.filter((p) => p.ok && p.kind === 'usage')
+  const parts = []
+
+  if (balances.length) {
+    const fastest = [...balances].sort((a, b) => a.forecast.daysLeft - b.forecast.daysLeft)[0]
+    parts.push(`按当前消耗，预付余额还能撑 <b>${fastest.forecast.daysLeft} 天</b>（${escapeHtml(fastest.name)} 最快见底）`)
+  }
+  if (bills.length) {
+    const total = bills.reduce((sum, p) => sum + (p.periodSpend || 0), 0)
+    parts.push(`近 30 天账单 <b>${money(total, bills[0].currency)}</b>`)
+  }
+
+  $('#insight').innerHTML = `<span class="ico">◈</span><span>${
+    parts.length ? parts.join(' · ') : '接入平台后，这里会给出一句话结论'
+  }</span>`
+}
+
+function cardHead(p) {
+  const head = document.createElement('div')
+  head.className = 'card-head'
+  head.innerHTML = `<span class="dot"></span><h2>${escapeHtml(p.name)}</h2>`
+  if (p.dashboardUrl) {
+    const a = document.createElement('a')
+    a.className = 'link'
+    a.href = p.dashboardUrl
+    a.target = '_blank'
+    a.rel = 'noreferrer'
+    a.textContent = '控制台 ↗'
+    head.append(a)
+  }
+  return head
 }
 
 function emptyState() {
@@ -126,24 +177,13 @@ function emptyState() {
 /* ---------------- card ---------------- */
 
 function card(p) {
+  if (p.kind === 'usage') return usageCard(p)
   const el = document.createElement('article')
   const threshold = settings.lowBalance[p.id] ?? p.lowBalance
   const low = p.ok && threshold != null && p.total <= threshold
   el.className = `card ${!p.ok ? (p.configured ? 'error' : 'empty') : low ? 'warn' : ''}`
 
-  const head = document.createElement('div')
-  head.className = 'card-head'
-  head.innerHTML = `<span class="dot"></span><h2>${escapeHtml(p.name)}</h2>`
-  if (p.dashboardUrl) {
-    const a = document.createElement('a')
-    a.className = 'link'
-    a.href = p.dashboardUrl
-    a.target = '_blank'
-    a.rel = 'noreferrer'
-    a.textContent = '控制台 ↗'
-    head.append(a)
-  }
-  el.append(head)
+  el.append(cardHead(p))
 
   const bal = document.createElement('div')
   bal.className = 'balance'
@@ -208,6 +248,50 @@ function card(p) {
   foot.className = 'card-foot'
   foot.innerHTML = `<span>${p.ok ? `采样 ${p.history?.length || 0} 点 · ${timeText(p.updatedAt)}` : '尚无数据'}</span>
     ${p.ok ? `<a href="/api/export.csv?provider=${encodeURIComponent(p.id)}">导出 CSV</a>` : ''}`
+  el.append(foot)
+
+  return el
+}
+
+/* ---------------- usage（按量计费）卡片 ---------------- */
+
+function usageCard(p) {
+  const el = document.createElement('article')
+  el.className = `card ${p.ok ? 'usage' : p.configured ? 'error' : 'empty'}`
+  el.append(cardHead(p))
+
+  const bal = document.createElement('div')
+  bal.className = 'balance'
+  if (p.ok) {
+    bal.innerHTML = `<span class="sym">${SYMBOL[p.currency] || p.currency}</span>
+      <span class="num">${Number(p.periodSpend).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span class="badge">近 ${p.periodDays || 30} 天账单</span>`
+  } else {
+    bal.innerHTML = `<span class="num empty">未连接</span>`
+  }
+  el.append(bal)
+
+  const perDay = p.ok ? (p.periodSpend || 0) / (p.periodDays || 30) : 0
+  const meta = document.createElement('div')
+  meta.className = 'meta'
+  meta.innerHTML = p.ok
+    ? `今日 ${money(p.todaySpend || 0, p.currency)} · 日均 ${money(perDay, p.currency)} · 按量计费，没有预付余额`
+    : `<span class="warn-text">${escapeHtml(p.error || '未配置')}</span>`
+  el.append(meta)
+
+  if (p.ok) {
+    const stats = document.createElement('div')
+    stats.className = 'stats'
+    stats.innerHTML = `
+      <div class="stat"><div class="k">今日花费</div><div class="v">${money(p.todaySpend || 0, p.currency)}</div></div>
+      <div class="stat"><div class="k">日均</div><div class="v">${money(perDay, p.currency)}</div></div>
+      <div class="stat"><div class="k">计费方式</div><div class="v na">按量</div></div>`
+    el.append(stats)
+  }
+
+  const foot = document.createElement('div')
+  foot.className = 'card-foot'
+  foot.innerHTML = `<span>${p.ok ? `更新于 ${timeText(p.updatedAt)}` : '需要 Admin Key'}</span><span>${escapeHtml(p.note || '')}</span>`
   el.append(foot)
 
   return el

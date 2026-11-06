@@ -112,6 +112,23 @@ h1 { font-size: 19px; letter-spacing: 0.2px; }
 .total .v { font-size: 21px; font-weight: 650; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; margin-top: 2px; }
 .total .s { color: var(--faint); font-size: 11.5px; margin-top: 2px; }
 
+/* ---------- insight ---------- */
+.insight {
+  max-width: 1240px;
+  margin: 12px auto 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: linear-gradient(90deg, var(--accent-soft), transparent 70%);
+  color: var(--text);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.insight .ico { color: var(--accent); }
+.insight b { color: var(--accent); font-weight: 650; }
+
 /* ---------- cards ---------- */
 .cards {
   max-width: 1240px;
@@ -119,6 +136,7 @@ h1 { font-size: 19px; letter-spacing: 0.2px; }
   padding: 16px 28px 36px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  align-items: start;
   gap: 16px;
 }
 .card {
@@ -139,6 +157,7 @@ h1 { font-size: 19px; letter-spacing: 0.2px; }
 }
 .card.warn::after { background: linear-gradient(90deg, transparent, var(--warn), transparent); }
 .card.error::after { background: linear-gradient(90deg, transparent, var(--err), transparent); }
+.card.usage::after { background: linear-gradient(90deg, transparent, #8b5cf6, transparent); }
 
 .card-head { display: flex; align-items: center; gap: 8px; }
 .card-head h2 { font-size: 14.5px; font-weight: 600; }

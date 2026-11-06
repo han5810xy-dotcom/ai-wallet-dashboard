@@ -19,6 +19,8 @@
 ## 特性
 
 - **一个页面看全部**：多平台卡片并排，顶部按币种合计余额、日均消耗与最短可用天数
+- **两种卡片**：预付余额型（DeepSeek / Router One / 千问）算「还能用几天」，按量账单型（OpenAI / Anthropic）算「近 30 天花了多少」，分开记账不混在一起
+- **一句话结论**：顶部自动生成「按当前消耗，余额还能撑 X 天 · 近 30 天账单 $Y」
 - **每日消耗柱状图**：按天聚合消耗与充值，可切换成余额曲线（充值点单独标出）
 - **余额预测**：按近 7 日均耗估算「约还剩 N 天」，低于 7 天徽标变黄
 - **低余额告警**：告警线可逐平台调整，配浏览器通知
@@ -71,13 +73,29 @@ pwsh -File scripts/install-shortcut.ps1 -Startup
 
 ## 支持的平台
 
-| id | 平台 | 接口 | 币种 | Key 获取 |
+| id | 平台 | 能力 | 接口 | 币种 |
 | --- | --- | --- | --- | --- |
-| `deepseek` | DeepSeek 开放平台 | `GET https://api.deepseek.com/user/balance` | CNY（国内账号） | <https://platform.deepseek.com/api_keys> |
-| `routerone` | Router One | `GET https://api.router.one/v1/balance` | USD | <https://router.one/dashboard/api-keys> |
-| `qianwen` | 千问AI平台 | 官方 CLI `qianwen billing balance summary --format json` | CNY | CLI 登录（见下） |
+| `deepseek` | DeepSeek 开放平台 | 余额 | `GET https://api.deepseek.com/user/balance` | CNY |
+| `routerone` | Router One | 余额 | `GET https://api.router.one/v1/balance` | USD |
+| `qianwen` | 千问AI平台 | 余额 | 官方 CLI `qianwen billing balance summary --format json` | CNY |
+| `openai` | OpenAI | 账单 | `GET /v1/organization/costs`（**Admin Key**） | USD |
+| `anthropic` | Anthropic Claude | 账单 | `GET /v1/organizations/cost_report`（**Admin Key**） | USD |
+| `gemini` | Google Gemini | 余额（手填） | 无公开接口 | USD |
 
 > DeepSeek 的余额接口需要 **API Key**（`sk-...`），不是网页登录态。
+
+### 为什么海外三家长得不一样
+
+这三家**都没有**「预付余额」查询接口，所以看板把它们做成两种卡片：
+
+- **账单型**（OpenAI / Anthropic）：用组织级费用报表，显示「近 30 天账单 + 今日花费」。需要 **Admin Key**（`sk-admin-…` / `sk-ant-admin…`），普通推理 Key 没有权限。
+  ```bash
+  export OPENAI_ADMIN_KEY=sk-admin-...
+  export ANTHROPIC_ADMIN_KEY=sk-ant-admin...
+  ```
+- **手填型**（Gemini）：Google 只在 Cloud Billing / BigQuery 里给花费数据，个人账号拉不到。所以 `gemini` 是手动余额——你在配置里写一个数，看板照常显示、告警、画趋势，只是需要你自己更新。
+
+账单型没有余额概念，也就没有「还能用几天」；余额型才有。顶部那句结论会把两类分开说。
 
 ### 千问AI平台（特殊）
 
@@ -119,7 +137,7 @@ qianwen billing balance summary --format json        # 看板就是调这条
 | `providers.<id>.lowBalance` | 低余额告警线（平台默认值见适配器） |
 | `providers.<id>.name` | 覆盖显示名（多账号时有用） |
 
-环境变量优先于配置文件：`DEEPSEEK_API_KEY`、`ROUTER_ONE_API_KEY`、`AI_WALLET_DATA_DIR`、`AI_WALLET_CONFIG`。
+环境变量优先于配置文件：`DEEPSEEK_API_KEY`、`ROUTER_ONE_API_KEY`、`OPENAI_ADMIN_KEY`、`ANTHROPIC_ADMIN_KEY`、`AI_WALLET_DATA_DIR`、`AI_WALLET_CONFIG`。
 
 平台级可选字段：`name`（显示名）、`lowBalance`（告警线）、`command` / `args` / `timeoutMs`（仅 `qianwen` 这类壳调用型平台）。
 

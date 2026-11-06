@@ -17,17 +17,22 @@ async function boot(t, { mock = true } = {}) {
   return { url, store }
 }
 
-test('GET /api/summary 返回三个平台与派生字段', async (t) => {
+test('GET /api/summary 返回全部平台与派生字段', async (t) => {
   const { url } = await boot(t)
   const res = await fetch(`${url}/api/summary`)
   assert.equal(res.status, 200)
   const data = await res.json()
-  assert.equal(data.providers.length, 3)
+  assert.ok(data.providers.length >= 6)
+  const kinds = new Set(data.providers.map((p) => p.kind))
+  assert.ok(kinds.has('balance'))
+  assert.ok(kinds.has('usage'), '账单型平台也在列表里')
   for (const p of data.providers) {
     assert.ok('daily' in p, '每个平台都带按天聚合')
     assert.ok('forecast' in p)
     assert.ok(Array.isArray(p.history))
   }
+  const usage = data.providers.find((p) => p.kind === 'usage')
+  assert.ok(usage.periodSpend > 0, '账单型平台有本期花费')
 })
 
 test('GET /api/export.csv 输出 CSV 并带上附件头', async (t) => {

@@ -50,6 +50,7 @@ export class Collector {
     const base = {
       id: provider.id,
       name: cfg.name || provider.name,
+      kind: provider.kind || 'balance',
       currency: cfg.currency || 'CNY',
       dashboardUrl: provider.dashboardUrl,
       docs: provider.docs,
@@ -80,6 +81,19 @@ export class Collector {
     try {
       const snap = await provider.fetchSnapshot({ env: this.env, config: cfg })
       const ts = this.now()
+      // 账单型平台没有「余额」可采样，直接返回当期费用，不写快照
+      if ((provider.kind || 'balance') === 'usage') {
+        return {
+          ...base,
+          ...snap,
+          ok: true,
+          updatedAt: ts,
+          history: [],
+          daily: [],
+          spend: spendStats([], ts),
+          forecast: null,
+        }
+      }
       await this.store.append(provider.id, snap, ts)
       const history = await this.store.read(provider.id, ts)
       return this.withDerived({ ...base, ...snap, ok: true, updatedAt: ts }, history, ts)
@@ -96,10 +110,34 @@ export class Collector {
   /** 演示数据：7 天每小时一个点，中间一次充值，便于直观看到消耗曲线 */
   mockItem(provider, base) {
     const end = this.now()
+
+    if ((provider.kind || 'balance') === 'usage') {
+      const period = provider.id === 'openai' ? 42.18 : 27.64
+      const today = provider.id === 'openai' ? 1.92 : 0.86
+      return {
+        ...base,
+        configured: true,
+        ok: true,
+        currency: 'USD',
+        balance: period,
+        total: period,
+        periodSpend: period,
+        todaySpend: today,
+        periodDays: 30,
+        note: '近 30 天组织费用，非余额',
+        updatedAt: end,
+        history: [],
+        daily: [],
+        spend: spendStats([], end),
+        forecast: null,
+      }
+    }
+
     const points = []
     const seed = provider.id.length * 7919
     const isCny = provider.id === 'deepseek' || provider.id === 'qianwen'
-    let value = isCny ? 168.4 : 12.8
+    const hash = [...provider.id].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+    let value = isCny ? 60 + (hash % 90) : 4 + (hash % 18)
     for (let i = 168; i >= 0; i -= 1) {
       const t = end - i * HOUR
       const noise = (Math.sin((i + seed) * 1.7) + Math.cos(i * 0.37)) * 0.012

@@ -1,14 +1,9 @@
 {
   "refreshSeconds": 60,
   "providers": {
-    "deepseek": {
-      "lowBalance": 20
-    },
-    "routerone": {
-      "lowBalance": 2
-    },
-    "qianwen": {
-      "lowBalance": 10
-    }
+    "deepseek": { "lowBalance": 20 },
+    "routerone": { "lowBalance": 2 },
+    "qianwen": { "lowBalance": 10 },
+    "gemini": { "balance": 25, "currency": "USD", "updatedAt": "2026-11-01" }
   }
 }
