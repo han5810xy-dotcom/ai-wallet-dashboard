@@ -1,10 +1,24 @@
 # ai-wallet-dashboard
 
-本地运行的 **AI 平台钱包看板**：把 DeepSeek、Router One 等平台的预付余额收进一个页面，直观看到余额、近 24 小时 / 7 天 / 30 天消耗趋势，余额过低时高亮告警。
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![node](https://img.shields.io/badge/node-%E2%89%A518.17-brightgreen.svg)](https://nodejs.org)
+[![tests](https://img.shields.io/badge/tests-38%20passing-brightgreen.svg)](./test)
+[![deps](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](./package.json)
+
+本地运行的 **AI 花费看板**：7 家平台的预付余额与按量账单，加 DSH 会话级花费归因，一个页面看完。
 
 零依赖、单命令启动、只监听 `127.0.0.1`，Key 不离开本机。
 
 ![看板截图](./docs/preview.png)
+
+## 设计取舍
+
+几个刻意的决定，看代码前先知道会省事：
+
+- **只用余额快照推导消耗，不依赖各家用量 API**——因为大多数平台根本没有这个接口；代价是采样不足两次时显示「数据不足」，而不是 0
+- **没有登记单价的模型只报 token**——用别家的价格套算会得到一个错的数字，宁可不给
+- **账单型与余额型分开记账**——「还能用几天」和「已经花了多少」不是一个概念，混在一起加总没有意义
+- **零依赖、无构建步骤**——`git clone` 就能跑；代价是前端手写原生 JS，没有组件框架
 
 ## 为什么
 
