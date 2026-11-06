@@ -6,6 +6,9 @@
     },
     "routerone": {
       "lowBalance": 2
+    },
+    "qianwen": {
+      "lowBalance": 10
     }
   }
 }

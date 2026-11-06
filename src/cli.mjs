@@ -19,6 +19,9 @@ const HELP = `ai-wallet —— 本地 AI 钱包看板
   AI_WALLET_DATA_DIR      快照目录（默认 ./data）
   AI_WALLET_CONFIG        配置文件路径（默认 ./ai-wallet.config.json）
 
+千问AI平台走官方 CLI 的登录态，无需环境变量：
+  npm i -g @qianwenai/qianwen-cli && qianwen auth login
+
 配置文件示例：
   { "refreshSeconds": 60, "providers": { "deepseek": { "lowBalance": 20 } } }
 `

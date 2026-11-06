@@ -71,8 +71,27 @@ msedge --app=http://127.0.0.1:8787
 | --- | --- | --- | --- | --- |
 | `deepseek` | DeepSeek 开放平台 | `GET https://api.deepseek.com/user/balance` | CNY（国内账号） | <https://platform.deepseek.com/api_keys> |
 | `routerone` | Router One | `GET https://api.router.one/v1/balance` | USD | <https://router.one/dashboard/api-keys> |
+| `qianwen` | 千问AI平台 | 官方 CLI `qianwen billing balance summary --format json` | CNY | CLI 登录（见下） |
 
 > DeepSeek 的余额接口需要 **API Key**（`sk-...`），不是网页登录态。
+
+### 千问AI平台（特殊）
+
+千问没有公开的余额 REST 接口，`sk-ws-…` 这类 API Key 只能调推理，查余额必须走官方 CLI 的**管理登录**：
+
+```bash
+npm install -g @qianwenai/qianwen-cli
+qianwen auth login                                   # OAuth 设备码，浏览器里点一下
+qianwen billing balance summary --format json        # 看板就是调这条
+```
+
+看板会直接调用 `qianwen` 命令并解析 JSON；没装或没登录时卡片显示对应提示，不影响其它平台。如果你的 `qianwen` 不在 PATH 里，用配置覆盖：
+
+```json
+{ "providers": { "qianwen": { "command": "C:/path/to/qianwen.cmd" } } }
+```
+
+它还能查用量，适合后续扩展成"token 消耗"卡片：`qianwen usage summary`、`qianwen usage payg`、`qianwen usage free-tier`。
 
 ## 配置
 
@@ -97,6 +116,8 @@ msedge --app=http://127.0.0.1:8787
 | `providers.<id>.name` | 覆盖显示名（多账号时有用） |
 
 环境变量优先于配置文件：`DEEPSEEK_API_KEY`、`ROUTER_ONE_API_KEY`、`AI_WALLET_DATA_DIR`、`AI_WALLET_CONFIG`。
+
+平台级可选字段：`name`（显示名）、`lowBalance`（告警线）、`command` / `args` / `timeoutMs`（仅 `qianwen` 这类壳调用型平台）。
 
 ## 工作原理
 
@@ -151,6 +172,7 @@ export default {
 
 ## 路线图
 
+- [ ] 千问 `usage payg` 接入，展示 token 级消耗而非余额差值
 - [ ] 阿里云百炼（OpenAPI 签名）与腾讯云 TokenHub（TC3 签名）
 - [ ] OpenAI / Anthropic / OpenRouter 等海外平台
 - [ ] 按 token 计费的用量接口接入（有则优先于余额推导）

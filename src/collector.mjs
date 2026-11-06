@@ -54,7 +54,9 @@ export class Collector {
 
     if (this.mock) return this.mockItem(provider, base)
 
-    const envKey = provider.envKeys.find((k) => this.env[k])
+    // envKeys 为空表示该平台不靠环境变量（例如千问走 CLI 登录态）
+    const needsEnv = provider.envKeys.length > 0
+    const envKey = needsEnv ? provider.envKeys.find((k) => this.env[k]) : 'cli'
     if (!envKey) {
       base.error = `未配置 ${provider.envKeys.join(' / ')}`
       const history = await this.store.read(provider.id, this.now())
@@ -92,12 +94,13 @@ export class Collector {
     const end = this.now()
     const points = []
     const seed = provider.id.length * 7919
-    let value = provider.id === 'deepseek' ? 168.4 : 12.8
+    const isCny = provider.id === 'deepseek' || provider.id === 'qianwen'
+    let value = isCny ? 168.4 : 12.8
     for (let i = 168; i >= 0; i -= 1) {
       const t = end - i * HOUR
       const noise = (Math.sin((i + seed) * 1.7) + Math.cos(i * 0.37)) * 0.012
-      value -= (provider.id === 'deepseek' ? 0.42 : 0.031) * (1 + noise)
-      if (i === 96) value += provider.id === 'deepseek' ? 50 : 5 // 三天前充值
+      value -= (isCny ? 0.42 : 0.031) * (1 + noise)
+      if (i === 96) value += isCny ? 50 : 5 // 三天前充值
       points.push({ t, total: round(Math.max(value, 0.01)), balance: round(Math.max(value, 0.01)) })
     }
     const last = points[points.length - 1]
@@ -105,7 +108,7 @@ export class Collector {
       ...base,
       configured: true,
       ok: true,
-      currency: provider.id === 'deepseek' ? 'CNY' : 'USD',
+      currency: isCny ? 'CNY' : 'USD',
       balance: last.total,
       total: last.total,
       updatedAt: end,
