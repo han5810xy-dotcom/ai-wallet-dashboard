@@ -3,6 +3,7 @@ data/
 .env
 .env.local
 ai-wallet.config.json
+.tmp-*/
 *.log
 .DS_Store
 Thumbs.db
