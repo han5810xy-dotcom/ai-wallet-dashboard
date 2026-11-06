@@ -122,6 +122,18 @@ h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
 
 .spark { width: 100%; height: 56px; display: block; margin-top: 4px; }
 
+.spark-empty {
+  height: 56px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4f5d70;
+  font-size: 11.5px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+}
+
 .card-foot { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 11.5px; margin-top: 8px; }
 .card-foot .err { color: var(--err); }
 

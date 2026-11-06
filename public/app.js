@@ -89,24 +89,34 @@ function card(p) {
   }
   el.append(meta)
 
-  const spends = document.createElement('div')
-  spends.className = 'spends'
-  for (const key of ['h24', 'd7', 'd30']) {
-    const s = p.spend?.[key]
-    const cell = document.createElement('div')
-    cell.className = 'spend'
-    const value = s ? money(s.spent, p.currency) : '数据不足'
-    cell.innerHTML = `<div class="k">${WINDOW_LABELS[key]}</div><div class="v ${s ? '' : 'na'}">${value}</div>${s?.toppedUp ? `<div class="topup">含充值 ${money(s.toppedUp, p.currency)}</div>` : ''}`
-    spends.append(cell)
-  }
-  el.append(spends)
+  if (p.ok) {
+    const spends = document.createElement('div')
+    spends.className = 'spends'
+    for (const key of ['h24', 'd7', 'd30']) {
+      const s = p.spend?.[key]
+      const cell = document.createElement('div')
+      cell.className = 'spend'
+      const value = s ? money(s.spent, p.currency) : '数据不足'
+      cell.innerHTML = `<div class="k">${WINDOW_LABELS[key]}</div><div class="v ${s ? '' : 'na'}">${value}</div>${s?.toppedUp ? `<div class="topup">含充值 ${money(s.toppedUp, p.currency)}</div>` : ''}`
+      spends.append(cell)
+    }
+    el.append(spends)
 
-  const spark = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  spark.setAttribute('class', 'spark')
-  spark.setAttribute('viewBox', '0 0 300 56')
-  spark.setAttribute('preserveAspectRatio', 'none')
-  spark.innerHTML = sparkPath(p.history || [])
-  el.append(spark)
+    const points = (p.history || []).filter((h) => Number.isFinite(h.total))
+    if (points.length >= 2) {
+      const spark = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      spark.setAttribute('class', 'spark')
+      spark.setAttribute('viewBox', '0 0 300 56')
+      spark.setAttribute('preserveAspectRatio', 'none')
+      spark.innerHTML = sparkPath(points)
+      el.append(spark)
+    } else {
+      const hint = document.createElement('div')
+      hint.className = 'spark-empty'
+      hint.textContent = '已采样 1 次，下一次刷新后出现余额曲线'
+      el.append(hint)
+    }
+  }
 
   const foot = document.createElement('div')
   foot.className = 'card-foot'
