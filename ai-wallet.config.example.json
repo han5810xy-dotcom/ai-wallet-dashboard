@@ -1,0 +1,11 @@
+{
+  "refreshSeconds": 60,
+  "providers": {
+    "deepseek": {
+      "lowBalance": 20
+    },
+    "routerone": {
+      "lowBalance": 2
+    }
+  }
+}

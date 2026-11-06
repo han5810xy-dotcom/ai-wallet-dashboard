@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 钱包看板</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="title">
+        <h1>AI 钱包看板</h1>
+        <p class="sub" id="sub">正在读取各平台余额…</p>
+      </div>
+      <div class="tools">
+        <span id="countdown" class="countdown"></span>
+        <button id="refresh" class="btn" type="button">立即刷新</button>
+      </div>
+    </header>
+
+    <main id="cards" class="cards" aria-live="polite">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </main>
+
+    <footer class="foot">
+      余额取自各平台官方接口，快照存在本地 <code>data/</code>；消耗按余额净变化估算，检测到充值会单独标注。
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
